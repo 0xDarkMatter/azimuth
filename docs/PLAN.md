@@ -8,23 +8,25 @@
 
 ## In Progress
 
-- [-] Project setup (requirements.txt, venv, simple structure)
+_No tasks currently in progress_
 
 ## Pending
 
-- [ ] MCP SDK integration and server boilerplate
-- [ ] Raindrop.io API client with authentication
-- [ ] Search bookmarks tool (keyword, tag, collection filters)
-- [ ] Get bookmark by ID tool (retrieve specific article)
-- [ ] List collections tool (hierarchy support)
-- [ ] Filter by tags tool (multi-tag queries)
-- [ ] Basic error handling and logging
-- [ ] README with setup and usage instructions
 - [ ] Test with Claude Desktop integration
+- [ ] Add more error handling edge cases
+- [ ] Performance testing with large collections
 
 ## Completed
 
-_No completed tasks yet - fresh project start_
+### MVP Core Features (2025-11-01)
+- [x] Project setup (requirements.txt, venv, simple structure) (fb389dc)
+- [x] MCP SDK integration and server boilerplate (fb389dc)
+- [x] Raindrop.io API client with authentication (fb389dc)
+- [x] List collections tool (hierarchy support) (fb389dc)
+- [x] Search bookmarks tool (keyword, tag, collection filters) (fb389dc)
+- [x] Get bookmark by ID tool (retrieve specific article) (fb389dc)
+- [x] Basic error handling and logging (fb389dc)
+- [x] README with setup and usage instructions (fb389dc)
 
 ---
 
@@ -72,4 +74,4 @@ v0.2.0 will add:
 - `[-]` = In Progress
 - `[x]` = Completed
 
-Last Updated: 2025-11-01
+Last Updated: 2025-11-01 (MVP Complete! 🎉)

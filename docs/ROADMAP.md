@@ -10,20 +10,20 @@ Focus on core read-only functionality to prove the concept and deliver immediate
 
 ## Version Roadmap
 
-### v0.1.0 - MVP (Search & Retrieval) 🔨
-**Status**: In Progress
+### v0.1.0 - MVP (Search & Retrieval) ✅
+**Status**: Complete (Pending testing)
 **Timeline**: 1-2 days
 **Goal**: Functional MCP server with read-only Raindrop.io access
 
-- [ ] Project setup (requirements.txt, venv, simple structure)
-- [ ] MCP SDK integration and server boilerplate
-- [ ] Raindrop.io API client with authentication
-- [ ] Search bookmarks tool (keyword, tag, collection filters)
-- [ ] Get bookmark by ID tool (retrieve specific article)
-- [ ] List collections tool (hierarchy support)
-- [ ] Filter by tags tool (multi-tag queries)
-- [ ] Basic error handling and logging
-- [ ] README with setup and usage instructions
+- [x] Project setup (requirements.txt, venv, simple structure)
+- [x] MCP SDK integration and server boilerplate
+- [x] Raindrop.io API client with authentication
+- [x] Search bookmarks tool (keyword, tag, collection filters)
+- [x] Get bookmark by ID tool (retrieve specific article)
+- [x] List collections tool (hierarchy support)
+- [-] Filter by tags tool (multi-tag queries) [implemented via search_bookmarks]
+- [x] Basic error handling and logging
+- [x] README with setup and usage instructions
 - [ ] Test with Claude Desktop integration
 
 ### v0.2.0 - Comprehensive Features 📋
