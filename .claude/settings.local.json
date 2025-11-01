@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//e/Projects/Coding/Fathom/**)",
+      "Bash(dir:*)",
+      "Bash(python test_discovery.py:*)",
+      "WebSearch",
+      "WebFetch(domain:www.abs.gov.au)",
+      "Bash(python test_abs_download.py:*)",
+      "Bash(curl:*)",
+      "Bash(python scripts/examine_tra_data.py:*)",
+      "Bash(python:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd LGA & Town Discovery module with real ABS and TRA data\n\nImplements comprehensive Australian tourism discovery system with official\ngovernment data sources and production-ready database schema.\n\n## New Features\n\n### Discovery Module (src/discovery/)\n- LGA Collector: Downloads 552 LGAs from ABS ASGS 2025\n- Tourism Region Collector: Loads 76 official Tourism Regions from TRA\n- State Tourism Org Collector: Manages 8 state-level tourism bodies  \n- Town Collector: Tracks 125+ towns with 10k+ population\n- Tourism Finder: Website discovery for all entity types\n- Tech Profiler: Technology stack detection for tourism websites\n\n### Database Schema (migrations/002_lga_town_discovery.sql)\n- Nullable FK pattern for entity-website mapping\n- 552 LGAs with official ABS codes\n- 76 Tourism Regions with 2,452 SA2 area mappings\n- 8 State Tourism Organizations\n- 125+ Towns\n- Comprehensive views and materialized analytics\n\n### Data Integration\n- Real ABS LGA data (auto-download from abs.gov.au)\n- Real TRA Tourism Regions (tourism-regions-allocations-2025.xlsx)\n- SA2 area coverage using PostgreSQL arrays with GIN indexes\n- Support for OT (Other Territories) state\n\n### Tools & Scripts\n- CLI tool for Fathom platform (tools/lga_discovery_tool.py)\n- Migration scripts (apply_migration.py, apply_constraint_fix.py)\n- Data loading script (load_initial_data.py)\n- Verification scripts (verify_schema.py, query_wa_supabase.py)\n\n### Tests\n- ABS download test (test_abs_download.py) - 552 LGAs\n- TRA data test (test_tra_data.py) - 76 Tourism Regions\n- Discovery module integration test (test_discovery.py)\n\n### Dependencies\n- pandas>=2.0.0 (Excel parsing)\n- openpyxl>=3.1.0 (Excel file support)\n\n## Technical Implementation\n\n- Nullable FK pattern: Ensures exactly ONE entity FK per website\n- GIN indexes on SA2 coverage arrays for fast containment searches\n- Materialized views for tech stack analytics\n- Comprehensive overview view unioning all entity types\n- Production-ready Supabase deployment\n\n## Documentation\n- REAL_DATA_INTEGRATION_SUMMARY.md: Complete implementation guide\n- Inline SQL comments and COMMENT ON statements\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Skill(structured-commits)",
+      "Bash(git checkout:*)",
+      "Bash(git commit:*)",
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "WebFetch(domain:developer.raindrop.io)",
+      "WebFetch(domain:github.com)",
+      "Bash(mkdir:*)",
+      "Bash(npm init:*)",
+      "Bash(git --version)",
+      "Bash(node --version)",
+      "Bash(git init:*)",
+      "SlashCommand(/sprint)",
+      "Bash(venvScriptspython.exe -m pip install --upgrade pip)",
+      "Bash(venvScriptspip.exe install -r requirements.txt)",
+      "Bash(./venv/Scripts/python.exe -m pip:*)",
+      "Bash(./venv/Scripts/pip.exe install:*)",
+      "Bash(./venv/Scripts/python.exe:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
