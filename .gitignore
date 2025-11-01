@@ -65,6 +65,7 @@ reports/*.txt
 reports/*.json
 reports/*.md
 !reports/.gitkeep
+!reports/README.md
 
 # Lock files (keep package-lock.json but ignore others if needed)
 # yarn.lock
