@@ -4,9 +4,9 @@
 
 Enable AI assistants to seamlessly access and manage your personal knowledge base stored in Raindrop.io. This MCP server provides Claude and other LLMs with structured tools to search, retrieve, and interact with your curated article collection, making your bookmarked content instantly available as context for AI conversations.
 
-## Current Phase: v0.1.0 - MVP (Search & Retrieval)
+## Current Phase: v0.2.0 - Analytics & Cleanup
 
-Focus on core read-only functionality to prove the concept and deliver immediate value.
+Focus on collection health, statistics, and maintenance tools to help manage 2000+ bookmarks effectively.
 
 ## Version Roadmap
 
@@ -26,20 +26,57 @@ Focus on core read-only functionality to prove the concept and deliver immediate
 - [x] README with setup and usage instructions
 - [ ] Test with Claude Desktop integration
 
-### v0.2.0 - Comprehensive Features 📋
-**Status**: Planned
-**Timeline**: 1 week after MVP
-**Goal**: Full CRUD operations and advanced search
+### v0.2.0 - Analytics & Cleanup 🔍
+**Status**: Planned (Next Phase)
+**Timeline**: 3-5 days
+**Goal**: Collection health, analytics, and maintenance tools
 
-- [ ] Create bookmark tool (save new articles)
+**Priority 1: Analytics & Statistics**
+- [ ] Get collection statistics tool (broken links, duplicates, tag counts)
+- [ ] List all tags with usage counts tool
+- [ ] Find duplicate bookmarks tool
+- [ ] Find broken links tool
+- [ ] Get content type breakdown (articles, images, videos)
+- [ ] Untagged bookmarks finder
+- [ ] Favorite/important bookmarks counter
+
+**Priority 2: Tag Management**
+- [ ] Rename tag tool
+- [ ] Merge tags tool
+- [ ] Delete unused tags tool
+- [ ] Tag suggestions based on content
+
+**Priority 3: Enhanced CLI**
+- [ ] Statistics report generation
+- [ ] Duplicate detection report
+- [ ] Broken link checker report
+- [ ] Tag cleanup suggestions
+
+### v0.3.0 - Write Operations 📝
+**Status**: Planned
+**Timeline**: 1 week
+**Goal**: Full CRUD operations for bookmarks and collections
+
+**Bookmark Operations**
+- [ ] Create bookmark tool (save new articles with auto-metadata)
 - [ ] Update bookmark tool (edit metadata, tags, description)
-- [ ] Delete bookmark tool (remove bookmarks)
+- [ ] Delete bookmark tool (move to trash/permanent delete)
+- [ ] Bulk bookmark operations (tag multiple, move to collection)
+- [ ] Set importance/favorite flag
+- [ ] Add/edit notes
+
+**Collection Operations**
 - [ ] Create collection tool (new collections)
-- [ ] Update collection tool (rename, reorganize)
+- [ ] Update collection tool (rename, reorganize, change parent)
+- [ ] Delete collection tool
+- [ ] Move collections in hierarchy
+- [ ] Set collection view mode (list/grid/masonry)
+- [ ] Set collection privacy
+
+**Advanced Features**
+- [ ] Highlights management (create, edit, delete)
 - [ ] Full-text search within article content
-- [ ] Bulk operations (tag multiple, move to collection)
-- [ ] Advanced filtering (date ranges, favorites, broken links)
-- [ ] Tag management (create, rename, merge tags)
+- [ ] Advanced filtering (date ranges, favorites)
 - [ ] Caching layer for performance
 - [ ] Comprehensive unit tests
 - [ ] Integration tests with mock API

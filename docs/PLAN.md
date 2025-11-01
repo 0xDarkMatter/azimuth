@@ -1,20 +1,40 @@
 # Current Sprint Plan
 
-**Sprint**: v0.1.0 MVP - Search & Retrieval
-**Duration**: 1-2 days
-**Goal**: Build functional MCP server with read-only Raindrop.io access for immediate value
+**Sprint**: v0.2.0 - Analytics & Cleanup
+**Duration**: 3-5 days
+**Goal**: Add collection analytics, statistics, and maintenance tools for managing 2000+ bookmarks
 
 ---
 
 ## In Progress
 
-_No tasks currently in progress_
+_Sprint starting - ready to begin Phase 2_
 
 ## Pending
 
+### Analytics & Statistics Tools
+- [ ] Implement get_statistics MCP tool (broken links, duplicates, counts)
+- [ ] Implement list_tags MCP tool (all tags with usage counts)
+- [ ] Implement find_duplicates MCP tool
+- [ ] Implement find_broken_links MCP tool
+- [ ] Add content type breakdown to statistics
+- [ ] Add untagged bookmarks finder
+
+### Tag Management Tools
+- [ ] Implement rename_tag MCP tool
+- [ ] Implement merge_tags MCP tool
+- [ ] Implement delete_tag MCP tool
+
+### Enhanced CLI
+- [ ] Add statistics report to CLI (--stats flag)
+- [ ] Add duplicate detection to CLI
+- [ ] Add broken link checker to CLI
+- [ ] Add tag cleanup suggestions
+
+### Testing & Polish
 - [ ] Test with Claude Desktop integration
-- [ ] Add more error handling edge cases
-- [ ] Performance testing with large collections
+- [ ] Test statistics tools with large collections
+- [ ] Add error handling for edge cases
 
 ## Completed
 
@@ -61,11 +81,12 @@ None currently.
 
 ### Next Sprint Preview
 
-v0.2.0 will add:
-- Write operations (create, update, delete)
-- Advanced search (full-text, date ranges)
-- Tag management tools
-- Caching for performance
+v0.3.0 - Write Operations will add:
+- Create, update, delete bookmarks
+- Collection management (create, update, move)
+- Highlights management
+- Full-text search
+- Advanced filtering
 
 ---
 
