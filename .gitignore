@@ -60,6 +60,12 @@ temp/
 # MCP specific
 .mcp/
 
+# Reports (user generated)
+reports/*.txt
+reports/*.json
+reports/*.md
+!reports/.gitkeep
+
 # Lock files (keep package-lock.json but ignore others if needed)
 # yarn.lock
 # pnpm-lock.yaml
