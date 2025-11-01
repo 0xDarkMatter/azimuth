@@ -114,6 +114,34 @@ Once connected, Claude can use these tools:
    - Pagination support
 3. **get_bookmark** - Get detailed info about a specific bookmark by ID
 
+## CLI Search Tool
+
+For standalone searches and report generation:
+
+```bash
+# Search and generate markdown report (fetches ALL pages)
+python search_cli.py "david grusch" --format md
+
+# Search with tags
+python search_cli.py "UAP" --tags aliens extraterrestrial --format json
+
+# Search specific collection only
+python search_cli.py "AI research" --collection 12345
+
+# First page only (fast, max 50 results)
+python search_cli.py "python tutorial" --first-page-only
+
+# Adjust concurrency for faster fetching
+python search_cli.py "large query" --max-concurrent 20
+```
+
+**Report Formats:**
+- `txt` - Plain text, easy to read
+- `md` - Markdown with clickable links
+- `json` - Complete metadata for processing
+
+Reports are saved to `reports/` directory with timestamps.
+
 ## Development Status
 
 🚧 **In Development** - MVP phase targeting core search and retrieval functionality.
