@@ -1,0 +1,11 @@
+# MCP SDK
+mcp
+
+# HTTP client for Raindrop.io API
+httpx
+
+# Environment variable management
+python-dotenv
+
+# Optional but useful
+pydantic
