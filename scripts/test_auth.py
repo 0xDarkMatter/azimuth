@@ -2,7 +2,12 @@
 import asyncio
 import httpx
 import os
+import sys
+from pathlib import Path
 from dotenv import load_dotenv
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 load_dotenv()
 

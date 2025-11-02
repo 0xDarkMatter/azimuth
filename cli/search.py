@@ -5,9 +5,14 @@ CLI tool to search Raindrop.io and save results to reports.
 import asyncio
 import argparse
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
-from raindrop_client import RaindropClient
+
+# Add parent directory to path to import from src
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src.raindrop_mcp.client import RaindropClient
 
 
 def format_text_report(query: str, items: list, collection_id: int = 0) -> str:
@@ -52,7 +57,8 @@ def format_text_report(query: str, items: list, collection_id: int = 0) -> str:
 
 def save_report(query: str, items: list, format: str = "txt", collection_id: int = 0):
     """Save search results to reports directory."""
-    reports_dir = Path(__file__).parent / "reports"
+    # Reports directory is at project root
+    reports_dir = Path(__file__).parent.parent / "reports"
     reports_dir.mkdir(exist_ok=True)
 
     # Create safe filename from query
@@ -281,10 +287,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python search_cli.py "david grusch"
-  python search_cli.py "UAP" --tags aliens --format md
-  python search_cli.py "AI" --collection 12345 --format json
-  python search_cli.py "python tutorial" --per-page 100
+  python cli/search.py "david grusch"
+  python cli/search.py "UAP" --tags aliens --format md
+  python cli/search.py "AI" --collection 12345 --format json
+  python cli/search.py "python tutorial" --max-concurrent 20
         """
     )
 

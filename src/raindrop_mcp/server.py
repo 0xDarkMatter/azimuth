@@ -18,7 +18,7 @@ from mcp.types import (
     EmbeddedResource,
 )
 from pydantic import AnyUrl
-from raindrop_client import RaindropClient
+from .client import RaindropClient
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
