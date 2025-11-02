@@ -110,6 +110,77 @@ async def handle_list_tools() -> list[Tool]:
                 "required": ["raindrop_id"],
             },
         ),
+        Tool(
+            name="list_tags",
+            description="List all tags with usage counts",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "collection_id": {
+                        "type": "integer",
+                        "description": "Collection ID (0=all collections)",
+                        "default": 0
+                    },
+                    "min_count": {
+                        "type": "integer",
+                        "description": "Only show tags with at least this many bookmarks",
+                        "default": 1
+                    }
+                },
+            },
+        ),
+        Tool(
+            name="get_statistics",
+            description="Get collection statistics including total count, duplicates, broken links, untagged bookmarks, and content type breakdown",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "collection_id": {
+                        "type": "integer",
+                        "description": "Collection ID to analyze (0=all, -1=unsorted)",
+                        "default": 0
+                    },
+                    "check_links": {
+                        "type": "boolean",
+                        "description": "Check for broken links (may be slow for large collections)",
+                        "default": False
+                    }
+                },
+            },
+        ),
+        Tool(
+            name="find_duplicates",
+            description="Find duplicate bookmarks (same URL)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "collection_id": {
+                        "type": "integer",
+                        "description": "Collection ID to search (0=all)",
+                        "default": 0
+                    }
+                },
+            },
+        ),
+        Tool(
+            name="find_broken_links",
+            description="Check bookmarks for broken/unreachable links",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "collection_id": {
+                        "type": "integer",
+                        "description": "Collection ID to check (0=all)",
+                        "default": 0
+                    },
+                    "timeout": {
+                        "type": "integer",
+                        "description": "Request timeout in seconds",
+                        "default": 10
+                    }
+                },
+            },
+        ),
     ]
 
 
@@ -238,12 +309,223 @@ async def handle_call_tool(name: str, arguments: dict | None) -> list[TextConten
 
             return [TextContent(type="text", text=output)]
 
+        elif name == "list_tags":
+            collection_id = arguments.get("collection_id", 0)
+            min_count = arguments.get("min_count", 1)
+
+            raindrop = get_raindrop_client()
+            response = await raindrop.get_tags(collection_id)
+            tags = response.get("items", [])
+
+            # Filter by min_count
+            filtered_tags = [t for t in tags if t.get("count", 0) >= min_count]
+
+            # Sort by count (descending)
+            filtered_tags.sort(key=lambda t: t.get("count", 0), reverse=True)
+
+            output = f"Found {len(filtered_tags)} tags"
+            if min_count > 1:
+                output += f" (with {min_count}+ bookmarks)"
+            output += ":\n\n"
+
+            for tag in filtered_tags:
+                tag_name = tag.get("_id", "")
+                count = tag.get("count", 0)
+                output += f"#{tag_name} ({count})\n"
+
+            return [TextContent(type="text", text=output)]
+
+        elif name == "get_statistics":
+            collection_id = arguments.get("collection_id", 0)
+            check_links = arguments.get("check_links", False)
+
+            raindrop = get_raindrop_client()
+            logger.info(f"Fetching all bookmarks from collection {collection_id}...")
+            items = await raindrop.get_all_raindrops(collection_id=collection_id)
+
+            total_count = len(items)
+
+            # Find duplicates (same URL)
+            url_map = {}
+            for item in items:
+                url = item.get("link", "")
+                if url:
+                    if url not in url_map:
+                        url_map[url] = []
+                    url_map[url].append(item)
+
+            duplicates = {url: bookmarks for url, bookmarks in url_map.items() if len(bookmarks) > 1}
+            duplicate_count = sum(len(bookmarks) - 1 for bookmarks in duplicates.values())
+
+            # Count untagged
+            untagged = [item for item in items if not item.get("tags", [])]
+            untagged_count = len(untagged)
+
+            # Content type breakdown
+            type_counts = {}
+            for item in items:
+                item_type = item.get("type", "link")
+                type_counts[item_type] = type_counts.get(item_type, 0) + 1
+
+            # Check broken links if requested
+            broken_count = 0
+            if check_links:
+                logger.info("Checking links (this may take a while)...")
+                broken_count = await check_broken_links(items)
+
+            # Format output
+            output = f"📊 Collection Statistics\n\n"
+            output += f"Total Bookmarks: {total_count}\n"
+            output += f"Duplicates: {duplicate_count} redundant bookmarks\n"
+            output += f"Untagged: {untagged_count} ({untagged_count * 100 // total_count if total_count > 0 else 0}%)\n"
+
+            if check_links:
+                output += f"Broken Links: {broken_count} ({broken_count * 100 // total_count if total_count > 0 else 0}%)\n"
+
+            output += f"\n📑 Content Types:\n"
+            for content_type, count in sorted(type_counts.items(), key=lambda x: x[1], reverse=True):
+                output += f"  {content_type}: {count} ({count * 100 // total_count}%)\n"
+
+            return [TextContent(type="text", text=output)]
+
+        elif name == "find_duplicates":
+            collection_id = arguments.get("collection_id", 0)
+
+            raindrop = get_raindrop_client()
+            logger.info(f"Fetching all bookmarks from collection {collection_id}...")
+            items = await raindrop.get_all_raindrops(collection_id=collection_id)
+
+            # Group by URL
+            url_map = {}
+            for item in items:
+                url = item.get("link", "")
+                if url:
+                    if url not in url_map:
+                        url_map[url] = []
+                    url_map[url].append(item)
+
+            # Find duplicates
+            duplicates = {url: bookmarks for url, bookmarks in url_map.items() if len(bookmarks) > 1}
+
+            if not duplicates:
+                return [TextContent(type="text", text="No duplicate bookmarks found!")]
+
+            total_duplicates = sum(len(bookmarks) - 1 for bookmarks in duplicates.values())
+            output = f"Found {len(duplicates)} URLs with duplicates ({total_duplicates} redundant bookmarks):\n\n"
+
+            for url, bookmarks in sorted(duplicates.items(), key=lambda x: len(x[1]), reverse=True):
+                output += f"🔗 {url}\n"
+                output += f"   {len(bookmarks)} copies:\n"
+                for bookmark in bookmarks:
+                    item_id = bookmark.get("_id")
+                    title = bookmark.get("title", "Untitled")
+                    created = bookmark.get("created", "")[:10]  # Date only
+                    tags = bookmark.get("tags", [])
+                    output += f"   • [{item_id}] {title}"
+                    if created:
+                        output += f" (created {created})"
+                    if tags:
+                        output += f" [tags: {', '.join(tags[:3])}]"
+                    output += "\n"
+                output += "\n"
+
+            return [TextContent(type="text", text=output)]
+
+        elif name == "find_broken_links":
+            collection_id = arguments.get("collection_id", 0)
+            timeout = arguments.get("timeout", 10)
+
+            raindrop = get_raindrop_client()
+            logger.info(f"Fetching all bookmarks from collection {collection_id}...")
+            items = await raindrop.get_all_raindrops(collection_id=collection_id)
+
+            logger.info(f"Checking {len(items)} links (timeout={timeout}s)...")
+            broken = await check_links_status(items, timeout)
+
+            if not broken:
+                return [TextContent(type="text", text="No broken links found!")]
+
+            output = f"Found {len(broken)} broken/unreachable links:\n\n"
+            for item, status in broken:
+                item_id = item.get("_id")
+                title = item.get("title", "Untitled")
+                link = item.get("link", "")
+                output += f"[{item_id}] {title}\n"
+                output += f"🔗 {link}\n"
+                output += f"❌ Status: {status}\n\n"
+
+            return [TextContent(type="text", text=output)]
+
         else:
             return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
     except Exception as e:
         logger.error(f"Error executing tool {name}: {e}")
         return [TextContent(type="text", text=f"Error: {str(e)}")]
+
+
+async def check_link_status(url: str, timeout: int = 10) -> tuple[bool, str]:
+    """
+    Check if a URL is accessible.
+
+    Returns:
+        Tuple of (is_ok, status_message)
+    """
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            response = await client.head(url, timeout=timeout)
+            if response.status_code < 400:
+                return (True, f"{response.status_code}")
+            else:
+                return (False, f"HTTP {response.status_code}")
+    except httpx.TimeoutException:
+        return (False, "Timeout")
+    except httpx.ConnectError:
+        return (False, "Connection failed")
+    except Exception as e:
+        return (False, f"Error: {str(e)[:50]}")
+
+
+async def check_links_status(items: list, timeout: int = 10, max_concurrent: int = 20) -> list:
+    """
+    Check multiple URLs for broken links.
+
+    Returns:
+        List of (item, status) tuples for broken links
+    """
+    broken = []
+
+    # Process in batches to avoid overwhelming the system
+    for i in range(0, len(items), max_concurrent):
+        batch = items[i:i + max_concurrent]
+        tasks = []
+
+        for item in batch:
+            url = item.get("link", "")
+            if url:
+                tasks.append((item, check_link_status(url, timeout)))
+
+        # Wait for batch
+        results = await asyncio.gather(*[task[1] for task in tasks])
+
+        for (item, _), (is_ok, status) in zip(tasks, results):
+            if not is_ok:
+                broken.append((item, status))
+
+    return broken
+
+
+async def check_broken_links(items: list) -> int:
+    """
+    Count broken links in a list of items.
+
+    Returns:
+        Number of broken links
+    """
+    broken = await check_links_status(items)
+    return len(broken)
 
 
 async def main():
