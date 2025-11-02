@@ -63,6 +63,9 @@ temp/
 # MCP specific
 .mcp/
 
+# Claude Code (personal settings/hooks)
+.claude/
+
 # Reports (user generated)
 reports/*.txt
 reports/*.json
