@@ -78,7 +78,7 @@ RAINDROP_TOKEN=your_actual_token_here
 ```bash
 # The MCP server runs via stdio, so it won't show output directly
 # You can verify it starts without errors:
-python server.py
+python src/raindrop_mcp/server.py
 # Press Ctrl+C to stop
 ```
 
@@ -91,7 +91,7 @@ Add to your Claude Desktop MCP configuration (`%APPDATA%\Claude\claude_desktop_c
   "mcpServers": {
     "raindrop": {
       "command": "E:\\Projects\\Coding\\Azimuth\\venv\\Scripts\\python.exe",
-      "args": ["E:\\Projects\\Coding\\Azimuth\\server.py"],
+      "args": ["E:\\Projects\\Coding\\Azimuth\\src\\raindrop_mcp\\server.py"],
       "env": {
         "RAINDROP_TOKEN": "your_actual_token_here"
       }
@@ -120,19 +120,19 @@ For standalone searches and report generation:
 
 ```bash
 # Search and generate markdown report (fetches ALL pages)
-python search_cli.py "david grusch" --format md
+python cli/search.py "david grusch" --format md
 
 # Search with tags
-python search_cli.py "UAP" --tags aliens extraterrestrial --format json
+python cli/search.py "UAP" --tags aliens extraterrestrial --format json
 
 # Search specific collection only
-python search_cli.py "AI research" --collection 12345
+python cli/search.py "AI research" --collection 12345
 
 # First page only (fast, max 50 results)
-python search_cli.py "python tutorial" --first-page-only
+python cli/search.py "python tutorial" --first-page-only
 
 # Adjust concurrency for faster fetching
-python search_cli.py "large query" --max-concurrent 20
+python cli/search.py "large query" --max-concurrent 20
 ```
 
 **Report Formats:**
