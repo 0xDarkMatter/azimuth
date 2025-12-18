@@ -56,15 +56,24 @@ def format_text_report(query: str, items: list, collection_id: int = 0) -> str:
     return output
 
 
-def save_report(query: str, items: list, format: str = "txt", collection_id: int = 0):
+def save_report(query: str, items: list, format: str = "txt", collection_id: int = 0, collection_name: str = None):
     """Save search results to reports directory."""
     # Reports directory is at project root
     reports_dir = Path(__file__).parent.parent / "reports"
     reports_dir.mkdir(exist_ok=True)
 
-    # Create safe filename from query
-    safe_query = "".join(c for c in query if c.isalnum() or c in (' ', '-', '_')).strip()
-    safe_query = safe_query.replace(' ', '_')[:50]  # Limit length
+    # Create safe filename from query or collection name
+    if not query and collection_name:
+        # Empty query - use collection name
+        safe_query = "".join(c for c in collection_name if c.isalnum() or c in (' ', '-', '_')).strip()
+        safe_query = f"collection_{safe_query.replace(' ', '_')[:40]}"
+    elif not query:
+        # Empty query and no name - use collection ID
+        safe_query = f"collection_{collection_id}"
+    else:
+        # Normal query
+        safe_query = "".join(c for c in query if c.isalnum() or c in (' ', '-', '_')).strip()
+        safe_query = safe_query.replace(' ', '_')[:50]  # Limit length
 
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f"{safe_query}_{timestamp}"
@@ -371,13 +380,42 @@ async def check_broken_links_report(collection_id: int = 0, timeout: int = 10, f
         return None
 
 
+async def resolve_collection_name(client: RaindropClient, name: str) -> int | None:
+    """
+    Resolve a collection name to its ID.
+    
+    Args:
+        client: RaindropClient instance
+        name: Collection name (case-insensitive)
+    
+    Returns:
+        Collection ID if found, None otherwise
+    """
+    # Fetch all collections
+    root_response = await client.list_collections()
+    collections = root_response.get("items", [])
+    
+    # Also get child collections
+    child_response = await client.list_child_collections()
+    collections.extend(child_response.get("items", []))
+    
+    # Search for matching name (case-insensitive)
+    name_lower = name.lower()
+    for coll in collections:
+        if coll.get("title", "").lower() == name_lower:
+            return coll.get("_id")
+    
+    return None
+
+
 async def search_and_save(
     query: str,
     collection_id: int = 0,
     tags: list = None,
     format: str = "txt",
-    fetch_all: bool = True,
-    max_concurrent: int = 10
+    limit: int = None,
+    max_concurrent: int = 10,
+    collection_name: str = None
 ):
     """Search Raindrop and save results."""
     client = RaindropClient()
@@ -386,11 +424,15 @@ async def search_and_save(
     if tags:
         print(f"With tags: {', '.join(tags)}")
     print(f"Collection: {collection_id}")
-    print(f"Fetch all: {fetch_all}")
+    if limit:
+        print(f"Limit: {limit} results")
+    else:
+        print(f"Limit: ALL results")
     print()
 
     try:
-        if fetch_all:
+        if limit is None:
+            # Fetch all results
             items = await fetch_all_pages(
                 client,
                 query,
@@ -400,16 +442,33 @@ async def search_and_save(
                 max_concurrent=max_concurrent
             )
         else:
-            # Single page fetch
-            result = await client.search_raindrops(
-                collection_id=collection_id,
-                search=query,
-                tags=tags,
-                page=0,
-                per_page=50
-            )
-            items = result.get("items", [])
-            print(f"Found {len(items)} results (first page only)\n")
+            # Limited fetch - get only what's needed
+            items = []
+            page = 0
+            per_page = min(limit, 50)  # Don't request more than limit or API max
+            
+            while len(items) < limit:
+                result = await client.search_raindrops(
+                    collection_id=collection_id,
+                    search=query,
+                    tags=tags,
+                    page=page,
+                    per_page=per_page
+                )
+                page_items = result.get("items", [])
+                if not page_items:
+                    break
+                    
+                items.extend(page_items)
+                page += 1
+                
+                # If we got fewer than requested, we've hit the end
+                if len(page_items) < per_page:
+                    break
+            
+            # Trim to exact limit
+            items = items[:limit]
+            print(f"Found {len(items)} results (limited to {limit})\n")
 
         if not items:
             print("No results found.")
@@ -417,7 +476,7 @@ async def search_and_save(
 
         # Save report
         print()
-        filepath = save_report(query, items, format, collection_id)
+        filepath = save_report(query, items, format, collection_id, collection_name)
         print(f"[OK] Report saved to: {filepath}")
         print(f"  Format: {format}")
         print(f"  Size: {filepath.stat().st_size:,} bytes")
@@ -436,6 +495,29 @@ async def search_and_save(
         return None
 
 
+async def resolve_collection(collection_arg: str) -> tuple[int, str | None]:
+    """Convert collection name to ID if needed.
+    
+    Returns:
+        Tuple of (collection_id, collection_name or None)
+    """
+    # Try to parse as integer first
+    try:
+        return (int(collection_arg), None)
+    except ValueError:
+        # Not an integer, treat as collection name
+        client = RaindropClient()
+        print(f"Looking up collection '{collection_arg}'...")
+        collection_id = await resolve_collection_name(client, collection_arg)
+        if collection_id is None:
+            print(f"Error: Collection '{collection_arg}' not found.")
+            print("\nRun this to list all collections:")
+            print("  python scripts/test_search.py  # Or use Claude Desktop")
+            sys.exit(1)
+        print(f"Found collection ID: {collection_id}\n")
+        return (collection_id, collection_arg)
+
+
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -443,14 +525,20 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Search
+  # Search (defaults to ALL results)
   python cli/search.py "david grusch"
   python cli/search.py "UAP" --tags aliens --format md
   python cli/search.py "AI" --collection 12345 --format json
+  python cli/search.py "python" --collection "Programming" --format md
+  python cli/search.py "" --collection "UAP" --format md  # All from collection
+  
+  # Limit results
+  python cli/search.py "AI" --limit 100
+  python cli/search.py "" --collection "UAP" --limit 50
 
   # Analytics
   python cli/search.py --duplicates
-  python cli/search.py --duplicates --collection 12345
+  python cli/search.py --duplicates --collection "Tech Articles"
   python cli/search.py --check-links --timeout 5
         """
     )
@@ -471,15 +559,16 @@ Examples:
     parser.add_argument(
         "query",
         nargs="?",
-        help="Search query (not used in analytics modes)"
+        default="",
+        help="Search query (use empty string to fetch all from collection)"
     )
 
     # Common arguments
     parser.add_argument(
         "-c", "--collection",
-        type=int,
-        default=0,
-        help="Collection ID (0=all, -1=unsorted, -99=trash)"
+        type=str,
+        default="0",
+        help="Collection ID or name (0=all, -1=unsorted, -99=trash)"
     )
     parser.add_argument(
         "-f", "--format",
@@ -495,9 +584,10 @@ Examples:
         help="Filter by tags (search mode only)"
     )
     parser.add_argument(
-        "--first-page-only",
-        action="store_true",
-        help="Fetch only the first page (search mode only)"
+        "-l", "--limit",
+        type=int,
+        default=None,
+        help="Limit number of results (default: fetch ALL)"
     )
     parser.add_argument(
         "--max-concurrent",
@@ -519,29 +609,33 @@ Examples:
     # Determine mode
     if args.duplicates:
         # Duplicate detection mode
+        collection_id, _ = asyncio.run(resolve_collection(args.collection))
         asyncio.run(find_duplicates_report(
-            collection_id=args.collection,
+            collection_id=collection_id,
             format=args.format
         ))
     elif args.check_links:
         # Broken link checking mode
+        collection_id, _ = asyncio.run(resolve_collection(args.collection))
         asyncio.run(check_broken_links_report(
-            collection_id=args.collection,
+            collection_id=collection_id,
             timeout=args.timeout,
             format=args.format
         ))
     else:
         # Search mode (default)
-        if not args.query:
+        if args.query is None:
             parser.error("query is required for search mode (or use --duplicates / --check-links)")
 
+        collection_id, collection_name = asyncio.run(resolve_collection(args.collection))
         asyncio.run(search_and_save(
             query=args.query,
-            collection_id=args.collection,
+            collection_id=collection_id,
             tags=args.tags,
             format=args.format,
-            fetch_all=not args.first_page_only,
-            max_concurrent=args.max_concurrent
+            limit=args.limit,
+            max_concurrent=args.max_concurrent,
+            collection_name=collection_name
         ))
 
 
